@@ -1,3 +1,4 @@
+from ckeditor_uploader.fields import RichTextUploadingField
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
@@ -22,7 +23,7 @@ class Brand(BaseModel):
 class Product(BaseModel):
     Name = models.CharField(max_length=255)
     Brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='products')
-    Description = RichTextField()
+    Description = RichTextUploadingField()
     TechnicalSpecifications = models.JSONField()
 
 class ListImg(BaseModel):
