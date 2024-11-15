@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'oauth2_provider',
     'corsheaders',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,12 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'phoneshop.urls'
 
 AUTH_USER_MODEL = 'apiphoneshop.User'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 TEMPLATES = [
@@ -143,9 +150,8 @@ cloudinary.config(
     cloud_name="dqsw7jfw4",
     api_key="775723474445265",
     api_secret="YSKnMr-cRHmlTudOiNyOFge1GVA",
-    api_proxy = "http://proxy.server:3128"
+    api_proxy="http://proxy.server:3128"
 )
 
 Client_id = "aytZMoJ2eOP93EFCdVzPQyHkwmbS1ruE7R5tttzt"
 Client_secret = "eQc8PAdZwLjgGS3s4KNu3qvRDGPQNEAQz2X7rKDtrwfccOX16SWzyJw1actmf7LksFqGtKK9yIXjbRFYE4bRAkXR0VcttoJGTlxpX2tUka36jGBB1DoFLaH9UHpsEE1B"
-
