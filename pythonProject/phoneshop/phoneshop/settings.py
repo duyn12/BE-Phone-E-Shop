@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +25,7 @@ SECRET_KEY = 'django-insecure-9yz03rx&9#(rsos3m-af6(&$&)hwft@ch9iijcd*q&vz@#$28@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['thaivanduy.pythonanywhere.com']
 
 # Application definition
 
@@ -39,9 +40,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'ckeditor',
     'oauth2_provider',
+    'corsheaders',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,6 +58,11 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'phoneshop.urls'
 
 AUTH_USER_MODEL = 'apiphoneshop.User'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CORS_ALLOW_ALL_ORIGINS = True
 
 TEMPLATES = [
     {
@@ -85,10 +94,10 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'lab_be_phone_shop',
-        'USER': 'root',
-        'PASSWORD': '12345678',
-        'HOST': ''
+        'NAME': 'ThaiVanDuy$phoneshopdb',
+        'USER': 'ThaiVanDuy',
+        'PASSWORD': 'admin@123',
+        'HOST': 'ThaiVanDuy.mysql.pythonanywhere-services.com'
     }
 }
 
@@ -126,6 +135,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -136,9 +147,9 @@ import cloudinary
 cloudinary.config(
     cloud_name="dqsw7jfw4",
     api_key="775723474445265",
-    api_secret="YSKnMr-cRHmlTudOiNyOFge1GVA"
+    api_secret="YSKnMr-cRHmlTudOiNyOFge1GVA",
+    api_proxy="http://proxy.server:3128"
 )
 
-Client_id = "1acoMq3evKYaT92Aw9zRg61v9dKEhz4aSsApZXUv"
-Client_secret = "SMTAuMcYbIB58EGeJVVuXSLStPSD064mf7zJJeW639u6EjlKWNWzmOA7ZzaUyVi0BOiwBLomCHdyVLkZqBGTsywS3QeFuanLb1BOTfgwSdOmcpuc6lzOveNq3NAyTowO"
-
+Client_id = "aytZMoJ2eOP93EFCdVzPQyHkwmbS1ruE7R5tttzt"
+Client_secret = "eQc8PAdZwLjgGS3s4KNu3qvRDGPQNEAQz2X7rKDtrwfccOX16SWzyJw1actmf7LksFqGtKK9yIXjbRFYE4bRAkXR0VcttoJGTlxpX2tUka36jGBB1DoFLaH9UHpsEE1B"
