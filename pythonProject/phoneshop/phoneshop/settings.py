@@ -59,7 +59,7 @@ ROOT_URLCONF = 'phoneshop.urls'
 
 AUTH_USER_MODEL = 'apiphoneshop.User'
 
-MEDIA_URL = '/media/'
+MEDIA_URL = 'https://thaivanduy.pythonanywhere.com/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
