@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Brand, Product, ListImg, Variant, Order, OrderDetail, Comment, Discount
+from .models import User, Brand, Product, ListImg, Variant, Order, OrderDetail, Comment, Discount, Cart, CartItem
 
 
 @admin.register(User)
@@ -8,7 +8,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email', 'Date_of_birth', 'Phone_number', 'Address')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
@@ -99,3 +99,17 @@ class DiscountAdmin(admin.ModelAdmin):
     list_display = ('id', 'Code', 'DiscountPercent', 'DiscountMoney', 'StartDate', 'EndDate', 'created_date')
     search_fields = ('Code',)
     list_filter = ('StartDate', 'EndDate', 'created_date')
+
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('id', 'User', 'created_date', 'update_date')
+    search_fields = ('User__username',)
+    list_filter = ('created_date',)
+
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'Cart', 'Variant', 'Quantity', 'created_date', 'update_date')
+    search_fields = ('Cart__User__username', 'Variant__SKU')
+    list_filter = ('created_date',)

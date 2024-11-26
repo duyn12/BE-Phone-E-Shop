@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Variant, Brand, ListImg
+from .models import Product, Variant, Brand, ListImg, User, CartItem, Cart
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -56,3 +56,62 @@ class ProductSerializer(serializers.ModelSerializer):
             'images',
             'variants',
         ]
+
+
+class CreateProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            'Name',
+            'Brand',
+            'Description',
+            'TechnicalSpecifications',
+        ]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'email', 'first_name', 'last_name', 'Phone_number', 'Address',
+                  'Date_of_birth']
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }
+
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+
+        return user
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['id', 'Variant', 'Quantity']
+
+    def validate_Quantity(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Số lượng phải lớn hơn hoặc bằng 1")
+        return value
+
+
+class CartSerializer(serializers.ModelSerializer):
+    cart_items = CartItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'User', 'cart_items']
+        read_only_fields = ['User']
