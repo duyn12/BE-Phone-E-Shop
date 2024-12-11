@@ -84,17 +84,10 @@ class CartViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='remove-from-cart')
     def remove_from_cart(self, request):
         # Xóa sản phẩm khỏi giỏ hàng
-        variant_id = request.data.get('variant_id')
-
-        # Kiểm tra xem variant có tồn tại hay không
-        try:
-            variant = Variant.objects.get(id=variant_id)
-        except Variant.DoesNotExist:
-            return Response({'error': 'Biến thể sản phẩm không tồn tại.'}, status=status.HTTP_404_NOT_FOUND)
-
+        cart_item_id = request.data.get('cart_item_id')
         cart = self.get_cart()
         try:
-            cart_item = CartItem.objects.get(Cart=cart, Variant=variant)
+            cart_item = CartItem.objects.get(Cart=cart, id=cart_item_id)
             cart_item.delete()
             return Response({'success': 'Sản phẩm đã được xóa khỏi giỏ hàng.'}, status=status.HTTP_204_NO_CONTENT)
         except CartItem.DoesNotExist:
