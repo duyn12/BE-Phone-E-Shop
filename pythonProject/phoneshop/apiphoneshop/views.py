@@ -1,11 +1,16 @@
+from datetime import timezone, datetime
+
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework import permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Product, Variant, Brand, ListImg, User, Cart, CartItem
+from .models import Product, Variant, Brand, ListImg, User, Cart, CartItem, Order, OrderDetail, Discount
+from .momo_payment import create_momo_payment
 from .permission import IsAdminOrOwner
-from .serializers import ProductSerializer, VariantSerializer, CreateProductSerializer, UserSerializer, CartSerializer
+from .serializers import ProductSerializer, VariantSerializer, CreateProductSerializer, UserSerializer, CartSerializer, \
+    OrderSerializer, PlaceOrderSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -141,3 +146,89 @@ class VariantViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         # Override phương thức retrieve để trả về kết quả theo id (pk)
         return super().retrieve(request, *args, **kwargs)
+
+
+class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
+    queryset = Order.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = PlaceOrderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        variant_id = serializer.validated_data['variant_id']
+        quantity = serializer.validated_data['quantity']
+        discount_code = serializer.validated_data.get('discount_code')
+        ship_address = serializer.validated_data['ship_address']
+        payment = serializer.validated_data['payment']
+
+        # Fetch variant
+        variant = get_object_or_404(Variant, id=variant_id)
+
+        if variant.Quantity < quantity:
+            return Response({"detail": "Not enough stock for this variant."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate total price
+        if variant.CompareAtPrice:
+            price = variant.CompareAtPrice * quantity
+        else:
+            price = variant.Price * quantity
+
+        # Fetch discount if provided
+        discount = None
+        if discount_code:
+            discount = Discount.objects.filter(Code=discount_code, StartDate__lte=datetime.now(),
+                                               EndDate__gte=datetime.now()).first()
+            if not discount:
+                return Response({"detail": "Invalid or expired discount code."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if discount.DiscountPercent:
+                price -= price * (discount.DiscountPercent / 100)
+            elif discount.DiscountMoney:
+                price -= discount.DiscountMoney
+
+        # Ensure price is not negative
+        price = max(price, 0)
+
+        # Create Order
+        order = Order.objects.create(
+            User=user,
+            Discount=discount,
+            ShipAddress=ship_address,
+            ShipDate=request.data.get('ship_date', datetime.now()),
+            Payment=payment
+        )
+
+        # Create OrderDetail
+        order_detail = OrderDetail.objects.create(
+            Order=order,
+            Variant=variant,
+            Quantity=quantity,
+            Price=price,
+            Status='Pending'
+        )
+
+        momo_response = create_momo_payment(
+            amount=(int)(price)
+        )
+
+        if isinstance(momo_response, dict):
+            if momo_response.get('resultCode') == 0:
+                short_link = momo_response.get('payUrl')
+                order.short_link = short_link
+                order_detail.Status = "Done"
+                order_detail.save()
+
+        # Decrease variant stock
+        variant.Quantity -= quantity
+        variant.save()
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='my-orders')
+    def my_orders(self, request):
+        user = request.user
+        orders = Order.objects.filter(User=user).prefetch_related('order_details')
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)

@@ -67,6 +67,7 @@ class Order(BaseModel):
     Note = models.TextField(blank=True)
     ShipAddress = models.TextField()
     ShipDate = models.DateTimeField()
+    Payment = models.CharField(max_length=50, null=True, blank=True)
 
 
 class OrderDetail(BaseModel):
@@ -90,6 +91,9 @@ class Discount(BaseModel):
     DiscountMoney = models.FloatField(null=True, blank=True)
     StartDate = models.DateField()
     EndDate = models.DateField()
+
+    def __str__(self):
+        return f"Cart of {self.Code}"
 
 
 class Cart(BaseModel):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Variant, Brand, ListImg, User, CartItem, Cart
+from .models import Product, Variant, Brand, ListImg, User, CartItem, Cart, OrderDetail, Order
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -115,3 +115,29 @@ class CartSerializer(serializers.ModelSerializer):
         model = Cart
         fields = ['id', 'User', 'cart_items']
         read_only_fields = ['User']
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderDetail
+        fields = ['id', 'Variant', 'Quantity', 'Price', 'Status']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    order_details = OrderDetailSerializer(many=True, read_only=True)
+    short_link = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = ['id', 'User', 'Discount', 'Note', 'ShipAddress', 'ShipDate', 'Payment', 'order_details', 'short_link']
+
+    def get_short_link(self, obj):
+        return obj.short_link if hasattr(obj, 'short_link') else None
+
+
+class PlaceOrderSerializer(serializers.Serializer):
+    variant_id = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+    discount_code = serializers.CharField(required=False, allow_blank=True)
+    ship_address = serializers.CharField()
+    payment = serializers.CharField()
