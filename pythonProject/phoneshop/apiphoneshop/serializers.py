@@ -19,8 +19,18 @@ class ListImgSerializer(serializers.ModelSerializer):
         return obj.TitlePhoto.url if obj.TitlePhoto else None
 
 
+class ProductNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'Name',
+        ]
+
+
 class VariantSerializer(serializers.ModelSerializer):
     img_url = serializers.SerializerMethodField()
+    Product = ProductNameSerializer(read_only=True)
 
     class Meta:
         model = Variant
