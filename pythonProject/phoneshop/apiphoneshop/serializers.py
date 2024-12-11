@@ -98,6 +98,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
+    Variant = VariantSerializer(read_only=True)
+
     class Meta:
         model = CartItem
         fields = ['id', 'Variant', 'Quantity']
