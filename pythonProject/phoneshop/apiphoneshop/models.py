@@ -33,7 +33,7 @@ class Product(BaseModel):
     Name = models.CharField(max_length=255)
     Brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='products')
     Description = RichTextUploadingField()
-    TechnicalSpecifications = models.JSONField()
+    TechnicalSpecifications = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"({self.Name})"
