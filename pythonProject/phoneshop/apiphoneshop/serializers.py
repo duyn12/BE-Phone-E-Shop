@@ -154,7 +154,17 @@ class PlaceOrderSerializer(serializers.Serializer):
     ship_address = serializers.CharField()
     payment = serializers.CharField()
 
+
+class UserFullNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'Phone_number', 'Address',
+                  'Date_of_birth']
+
+
 class CommentSerializer(serializers.ModelSerializer):
+    User = UserFullNameSerializer(read_only=True)
+
     class Meta:
         model = Comment
         fields = ['id', 'User', 'Variant', 'Comment', 'Star', 'created_date', 'update_date']
