@@ -4,13 +4,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework import permissions, generics
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from .models import Product, Variant, Brand, ListImg, User, Cart, CartItem, Order, OrderDetail, Discount
+from .models import Product, Variant, Brand, ListImg, User, Cart, CartItem, Order, OrderDetail, Discount, Comment
 from .momo_payment import create_momo_payment
-from .permission import IsAdminOrOwner
+from .permission import IsAdminOrOwner, IsOwnerOrReadOnly
 from .serializers import ProductSerializer, VariantSerializer, CreateProductSerializer, UserSerializer, CartSerializer, \
-    OrderSerializer, PlaceOrderSerializer
+    OrderSerializer, PlaceOrderSerializer, CommentSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -201,17 +202,16 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
             Price=price,
             Status='Pending'
         )
-
-        momo_response = create_momo_payment(
-            amount=(int)(price)
-        )
-
-        if isinstance(momo_response, dict):
-            if momo_response.get('resultCode') == 0:
-                short_link = momo_response.get('payUrl')
-                order.short_link = short_link
-                order_detail.Status = "Done"
-                order_detail.save()
+        if payment == 'MoMo':
+            momo_response = create_momo_payment(
+                amount=(int)(price)
+            )
+            if isinstance(momo_response, dict):
+                if momo_response.get('resultCode') == 0:
+                    short_link = momo_response.get('payUrl')
+                    order.short_link = short_link
+                    order_detail.Status = "Done"
+                    order_detail.save()
 
         # Decrease variant stock
         variant.Quantity -= quantity
@@ -225,3 +225,22 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
         orders = Order.objects.filter(User=user).prefetch_related('order_details')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(User=self.request.user)
+
+    def perform_update(self, serializer):
+        if not self.get_object().User == self.request.user:
+            raise PermissionDenied("You do not have permission to edit this comment.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if not instance.User == self.request.user:
+            raise PermissionDenied("You do not have permission to delete this comment.")
+        instance.delete()

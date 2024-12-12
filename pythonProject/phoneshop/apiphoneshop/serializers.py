@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Variant, Brand, ListImg, User, CartItem, Cart, OrderDetail, Order
+from .models import Product, Variant, Brand, ListImg, User, CartItem, Cart, OrderDetail, Order, Comment
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -153,3 +153,13 @@ class PlaceOrderSerializer(serializers.Serializer):
     discount_code = serializers.CharField(required=False, allow_blank=True)
     ship_address = serializers.CharField()
     payment = serializers.CharField()
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'User', 'Variant', 'Comment', 'Star', 'created_date', 'update_date']
+        read_only_fields = ['id', 'User', 'created_date', 'update_date']
+
+    def create(self, validated_data):
+        validated_data['User'] = self.context['request'].user
+        return super().create(validated_data)
