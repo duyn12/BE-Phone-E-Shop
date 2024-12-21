@@ -155,3 +155,11 @@ cloudinary.config(
 
 Client_id = "aytZMoJ2eOP93EFCdVzPQyHkwmbS1ruE7R5tttzt"
 Client_secret = "eQc8PAdZwLjgGS3s4KNu3qvRDGPQNEAQz2X7rKDtrwfccOX16SWzyJw1actmf7LksFqGtKK9yIXjbRFYE4bRAkXR0VcttoJGTlxpX2tUka36jGBB1DoFLaH9UHpsEE1B"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_SSL = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'mobitech.teams@gmail.com'
+EMAIL_HOST_PASSWORD = 'jytkusebmyngqwhx'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
