@@ -1,5 +1,7 @@
 from datetime import timezone, datetime
 
+from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework import permissions, generics
@@ -144,7 +146,11 @@ class VariantViewSet(viewsets.ReadOnlyModelViewSet):
 
 class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = Order.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'check_order':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
         serializer = PlaceOrderSerializer(data=request.data)
@@ -217,6 +223,29 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
         variant.Quantity -= quantity
         variant.save()
 
+        # send mail to customer
+        subject = "Order Confirmation"
+        message = (
+            f"Dear {user.username},\n\n"
+            f"Thank you for your order!\n\n"
+            f"Order Details:\n"
+            f"- Order ID: {order.id}\n"
+            f"- Product: {variant.Product.Name}\n"
+            f"- Variant: {variant.SKU}\n"
+            f"- Quantity: {quantity}\n"
+            f"- Total Price: ${price:.2f}\n\n"
+            f"Shipping to: {ship_address}\n"
+            f"Payment Method: {payment}\n\n"
+            f"Best regards,\nYour Store Team"
+        )
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='my-orders')
@@ -225,6 +254,24 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
         orders = Order.objects.filter(User=user).prefetch_related('order_details')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='check-order')
+    def check_order(self, request):
+        phone_number = request.data.get('phone_number')
+        order_code = request.data.get('order_code')
+
+        if not phone_number or not order_code:
+            return Response({"detail": "Phone number and order code are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch the order
+        order = Order.objects.filter(User__Phone_number=phone_number, id=order_code).first()
+
+        if not order:
+            return Response({"detail": "Order not found or phone number does not match."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
