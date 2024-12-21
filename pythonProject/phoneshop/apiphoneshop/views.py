@@ -44,6 +44,25 @@ class UserViewSet(viewsets.ModelViewSet):
             return User.objects.all()
         return User.objects.filter(id=self.request.user.id)
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        user_email = response.data.get('email')
+
+        subject = "Welcome to Our Platform"
+        message = (
+            f"Dear {response.data.get('username')},\n\n"
+            "Thank you for registering with us. We are excited to have you on board!\n\n"
+            "Best regards,\nYour Platform Team"
+        )
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user_email],
+            fail_silently=False,
+        )
+        return response
+
 
 class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
