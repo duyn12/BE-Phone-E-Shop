@@ -169,6 +169,8 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
     def get_permissions(self):
         if self.action == 'check_order':
             return [permissions.AllowAny()]
+        elif self.action == 'revenue_year':
+            return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
@@ -291,6 +293,27 @@ class OrderViewSet(viewsets.ViewSet, generics.CreateAPIView):
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='revenue-year')
+    def revenue_year(self, request):
+        year = request.query_params.get('year')
+
+        if not year:
+            return Response({"detail": "Year is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            year = int(year)
+        except ValueError:
+            return Response({"detail": "Year must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        revenue_data = []
+
+        for month in range(1, 13):
+            orders = OrderDetail.objects.filter(Order__ShipDate__year=year, Order__ShipDate__month=month)
+            total_revenue = sum(order.Price * order.Quantity for order in orders)
+            revenue_data.append({"month": month, "revenue": total_revenue})
+
+        return Response({"year": year, "monthly_revenue": revenue_data}, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
